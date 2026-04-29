@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The EL/CL Choreography — Canonical Technical Reference</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23161b22'/%3E%3Cpath d='M8 1.5 3.5 8 8 10.5 12.5 8 8 1.5Zm0 9.6-4.5-2.5L8 14.5l4.5-5.9L8 11.1Z' fill='%2358a6ff'/%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    securityLevel: 'loose',
+    flowchart: { htmlLabels: true },
+    sequence: { actorMargin: 50 }
+  });
+  mermaid.run({ querySelector: '.mermaid' }).catch((error) => {
+    console.error('Mermaid render failed', error);
+    document.documentElement.classList.add('mermaid-error');
+  });
+});
+</script>
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--panel2:#1c2330;--ink:#c9d1d9;--mute:#8b949e;--accent:#58a6ff;--good:#3fb950;--warn:#d29922;--bad:#f85149;--code:#1f2630;--border:#30363d}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.55 -apple-system,Segoe UI,Inter,Roboto,sans-serif}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+header{position:sticky;top:0;z-index:9;background:#0d1117e6;backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:10px 18px}
+header h1{font-size:16px;margin:0;font-weight:600}
+header .sub{color:var(--mute);font-size:12px}
+.layout{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 50px)}
+nav{position:sticky;top:50px;height:calc(100vh - 50px);overflow:auto;background:var(--panel);border-right:1px solid var(--border);padding:12px 10px;font-size:13px}
+nav ol{list-style:none;padding:0;margin:0;counter-reset:n}
+nav ol li{counter-increment:n;margin:2px 0}
+nav ol li>a::before{content:counter(n)". ";color:var(--mute)}
+nav details{margin:6px 0}
+nav summary{cursor:pointer;font-weight:600;color:#e6edf3;padding:4px 6px;border-radius:6px}
+nav summary:hover{background:#222a36}
+nav ul{list-style:none;padding:0 0 0 14px;margin:4px 0}
+nav ul li{margin:2px 0}
+main{padding:24px 36px;max-width:1100px;min-width:0}
+section{margin-bottom:48px;scroll-margin-top:64px}
+h2{border-bottom:1px solid var(--border);padding-bottom:6px;margin-top:36px;font-size:22px}
+h3{margin-top:28px;font-size:17px;color:#e6edf3}
+h4{margin-top:18px;font-size:14.5px;color:#e6edf3}
+code,pre,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.7px}
+code{background:var(--code);padding:1px 5px;border-radius:4px;color:#d2dae6}
+pre{background:var(--code);padding:12px 14px;border:1px solid var(--border);border-radius:8px;overflow:auto}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}
+th,td{border:1px solid var(--border);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:#1d242e}
+tr:nth-child(even) td{background:#141a22}
+.callout{border-left:3px solid var(--accent);background:#11233a;padding:10px 14px;margin:14px 0;border-radius:0 8px 8px 0}
+.warn{border-left-color:var(--warn);background:#2a2310}
+.bad{border-left-color:var(--bad);background:#2a1414}
+.good{border-left-color:var(--good);background:#0e2316}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;background:#222a36;font-size:11px;color:#cbd5e1;margin:0 3px 0 0;border:1px solid var(--border)}
+.pill.v{background:#11233a;color:#9ecbff;border-color:#1f4068}
+.pill.g{background:#0e2316;color:#86efac;border-color:#1d5530}
+.pill.b{background:#2a1414;color:#fda4a4;border-color:#5a2222}
+.pill.w{background:#2a2310;color:#facc15;border-color:#5a4710}
+.mermaid{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px;margin:14px 0;overflow:auto}
+.mermaid-error .mermaid{border-color:var(--bad)}
+.tabset{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.tabset label{cursor:pointer;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12.5px}
+.tabset input{display:none}
+.tabset input:checked+label{background:#1f4068;border-color:#2f5f95;color:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.card h4{margin-top:0}
+p,li,td{overflow-wrap:anywhere}
+table{display:block;max-width:100%;overflow-x:auto}
+code{word-break:break-word}
+hr.fade{border:0;border-top:1px solid var(--border);margin:24px 0}
+.kbd{background:#222a36;border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:11.5px}
+.muted{color:var(--mute)}
+.ok{color:var(--good)} .alert{color:var(--bad)} .meh{color:var(--warn)}
+@media(max-width:900px){.layout{grid-template-columns:1fr}nav{position:static;height:auto}main{padding:20px 16px}.grid2,.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>The EL/CL Choreography — A Canonical Technical Reference</h1>
+  <div class="sub">Engine API · Sync · Block Production · Reorgs · Per-Client Deviations · Pectra/Fusaka era · Updated April 2026</div>
+</header>
+<div class="layout">
+<nav>
+<details open><summary>Foundations</summary><ul>
+<li><a href="#intro">0 · Orientation</a></li>
+<li><a href="#engine-api">1 · Engine API spec</a></li>
+<li><a href="#methods">1.1 Method × fork matrix</a></li>
+<li><a href="#auth">1.2 JWT &amp; transport</a></li>
+<li><a href="#status">1.3 PayloadStatus FSM</a></li>
+</ul></details>
+<details open><summary>Lifecycle</summary><ul>
+<li><a href="#startup">2 · Startup &amp; capability handshake</a></li>
+<li><a href="#sync">3 · Sync modes</a></li>
+<li><a href="#optimistic">4 · Optimistic sync</a></li>
+<li><a href="#steady">5 · Steady-state import</a></li>
+<li><a href="#proposal">6 · Block production</a></li>
+<li><a href="#reorgs">7 · Reorgs &amp; finality</a></li>
+</ul></details>
+<details open><summary>Forks</summary><ul>
+<li><a href="#cancun">8 · Cancun/Deneb</a></li>
+<li><a href="#prague">9 · Prague/Electra</a></li>
+<li><a href="#fusaka">10 · Fusaka/Osaka (PeerDAS)</a></li>
+<li><a href="#expiry">11 · EIP-4444 history expiry</a></li>
+</ul></details>
+<details open><summary>Edges</summary><ul>
+<li><a href="#failures">12 · Failure modes</a></li>
+<li><a href="#pairs">13 · Pairing matrix</a></li>
+</ul></details>
+<details open><summary>Per-client deep dives</summary><ul>
+<li><a href="#geth">EL · Geth</a></li>
+<li><a href="#nethermind">EL · Nethermind</a></li>
+<li><a href="#erigon">EL · Erigon</a></li>
+<li><a href="#besu">EL · Besu</a></li>
+<li><a href="#nimbus-el">EL · Nimbus-eth1</a></li>
+<li><a href="#prysm">CL · Prysm</a></li>
+<li><a href="#lighthouse">CL · Lighthouse</a></li>
+<li><a href="#teku">CL · Teku</a></li>
+<li><a href="#lodestar">CL · Lodestar</a></li>
+<li><a href="#nimbus-cl">CL · Nimbus-eth2</a></li>
+</ul></details>
+<details><summary>Appendix</summary><ul>
+<li><a href="#errors">Error code reference</a></li>
+<li><a href="#caveats">Spec uncertainties</a></li>
+</ul></details>
+</nav>
+<main>
+
+<section id="intro">
+<h2>0 · Orientation</h2>
+<p>Post-Merge Ethereum runs as <strong>two cooperating processes</strong>: a Consensus Layer (CL/beacon) node that owns fork choice, attestations and finality, and an Execution Layer (EL) node that owns the EVM, state trie and the transaction pool. They are wired together by a single, narrow JSON-RPC surface — the <strong>Engine API</strong> on port <code>8551</code>, JWT-authenticated — and a tight <em>choreography</em> of three families of calls: <code>engine_newPayload</code>, <code>engine_forkchoiceUpdated</code>, and <code>engine_getPayload</code>. Every method version, every status code and every timeout in this surface is load-bearing for liveness and safety.</p>
+<p>This site documents the canonical dance and every meaningful client deviation across the five major ELs (<span class="pill">Geth</span><span class="pill">Nethermind</span><span class="pill">Erigon</span><span class="pill">Besu</span><span class="pill">Nimbus-eth1</span>) and the five major CLs (<span class="pill">Prysm</span><span class="pill">Lighthouse</span><span class="pill">Teku</span><span class="pill">Lodestar</span><span class="pill">Nimbus-eth2</span>) as of April 2026 — i.e. post-Pectra (May 2025) and post-Fusaka/Osaka (Dec 3 2025), with PeerDAS active.</p>
+<div class="grid3">
+<div class="card"><h4>Three-call dance</h4><p><code>newPayload</code> = "validate this block." <code>forkchoiceUpdated</code> = "this is the head; optionally start building." <code>getPayload</code> = "give me the block you've been building."</p></div>
+<div class="card"><h4>Who owns what</h4><p>CL owns: head selection, attestations, finality, blob/column DAS, validator duties. EL owns: EVM execution, state, txpool, blob/cell mempool, request collection (deposits/withdrawals/consolidations).</p></div>
+<div class="card"><h4>Single authoritative driver</h4><p>Exactly one CL drives <code>FCU</code>. Many CLs may share a JWT secret and call <code>newPayload</code>, but multi-driver fork choice is undefined.</p></div>
+</div>
+</section>
+
+<section id="engine-api">
+<h2>1 · Engine API foundations</h2>
+<p>The Engine API is specified in <code>ethereum/execution-apis</code> under <code>src/engine/{paris,shanghai,cancun,prague,osaka,common,authentication,identification}.md</code>. It is a JSON-RPC 2.0 dialect with strict, fork-versioned methods, a constrained <code>PayloadStatusV1</code> state machine, and bounded timeouts. The CL is the <em>only</em> client of this API; the EL must serve it on a port distinct from the public <code>eth_*</code> JSON-RPC.</p>
+<h3 id="methods">1.1 Method × fork matrix</h3>
+<table>
+<thead><tr><th>Method</th><th>Introduced</th><th>Timeout</th><th>Params / response delta</th></tr></thead>
+<tbody>
+<tr><td><code>engine_newPayloadV1</code></td><td>Paris (EIP-3675)</td><td>8 s</td><td><code>(ExecutionPayloadV1)</code> → <code>PayloadStatusV1</code></td></tr>
+<tr><td><code>engine_newPayloadV2</code></td><td>Shanghai (EIP-4895)</td><td>8 s</td><td>+ withdrawals in payload</td></tr>
+<tr><td><code>engine_newPayloadV3</code></td><td>Cancun (EIP-4844, 4788)</td><td>8 s</td><td>+ <code>expectedBlobVersionedHashes</code>, <code>parentBeaconBlockRoot</code>; <code>blobGasUsed</code>, <code>excessBlobGas</code> in payload</td></tr>
+<tr><td><code>engine_newPayloadV4</code></td><td>Prague (EIP-7685)</td><td>8 s</td><td>+ <code>executionRequests: Array&lt;DATA&gt;</code> (type-prefixed RLP requests, ascending)</td></tr>
+<tr><td><code>engine_forkchoiceUpdatedV1/V2/V3</code></td><td>Paris/Shanghai/Cancun</td><td>8 s</td><td>V3 also accepts Prague timestamps; <code>PayloadAttributesV3</code> adds <code>parentBeaconBlockRoot</code></td></tr>
+<tr><td><code>engine_getPayloadV1..V4</code></td><td>Paris..Prague</td><td>1 s</td><td>V2 adds <code>blockValue</code>; V3 adds <code>blobsBundle</code> + <code>shouldOverrideBuilder</code>; V4 adds <code>executionRequests</code></td></tr>
+<tr><td><code>engine_getPayloadV5</code></td><td>Osaka/Fulu (EIP-7594)</td><td>1 s</td><td>Returns <code>BlobsBundleV2</code> with <code>CELLS_PER_EXT_BLOB × N</code> cell proofs</td></tr>
+<tr><td><code>engine_exchangeCapabilities</code></td><td>Shanghai-era</td><td>1 s</td><td>Symmetric handshake; never re-versioned; must not list itself</td></tr>
+<tr><td><code>engine_exchangeTransitionConfigurationV1</code></td><td>Paris (deprecated Cancun)</td><td>1 s</td><td>CL <em>must not</em> call post-Cancun</td></tr>
+<tr><td><code>engine_getPayloadBodiesByHashV1</code> / <code>ByRangeV1</code></td><td>Shanghai</td><td>—</td><td>Used by CLs to retrieve historical EL bodies; range must support ≥32</td></tr>
+<tr><td><code>engine_getBlobsV1</code></td><td>Cancun</td><td>1 s</td><td>Pull blobs by versioned hash from EL mempool; null per-slot for misses; ≥128 batch</td></tr>
+<tr><td><code>engine_getBlobsV2</code></td><td>Osaka</td><td>1 s</td><td>All-or-nothing; <code>BlobAndProofV2</code> with cell proofs</td></tr>
+<tr><td><code>engine_getBlobsV3</code></td><td>Osaka</td><td>1 s</td><td>Partial responses allowed (per-slot null)</td></tr>
+<tr><td><code>engine_getClientVersionV1</code></td><td>Cancun-era</td><td>—</td><td>Each side returns <code>{code,name,version,commit}</code>; CL embeds EL identity in graffiti</td></tr>
+</tbody>
+</table>
+
+<h3 id="auth">1.2 JWT, transport, port</h3>
+<ul>
+<li><strong>Algorithm:</strong> <code>HS256</code> only; <code>alg:none</code> must be rejected. 32-byte (256-bit) secret in hex.</li>
+<li><strong>Required claim:</strong> <code>iat</code> within ±60 s of EL clock. Optional: <code>id</code>, <code>clv</code>. Unknown claims must be ignored.</li>
+<li><strong>Default port:</strong> 8551, distinct from public <code>eth_*</code> JSON-RPC. <strong>HTTP:</strong> per-request <code>Authorization: Bearer &lt;jwt&gt;</code>. <strong>WebSocket:</strong> upgrade handshake authenticated only; frames are not. <strong>IPC:</strong> no JWT (filesystem permissions).</li>
+<li><strong>Required <code>eth</code> namespace methods on the engine port:</strong> <code>eth_blockNumber</code>, <code>eth_call</code>, <code>eth_chainId</code>, <code>eth_getCode</code>, <code>eth_getBlockByHash</code>, <code>eth_getBlockByNumber</code>, <code>eth_getLogs</code>, <code>eth_sendRawTransaction</code>, <code>eth_syncing</code>.</li>
+</ul>
+
+<h3 id="status">1.3 PayloadStatus state machine</h3>
+<div class="mermaid">
+stateDiagram-v2
+[*] --> SYNCING: parent unknown
+[*] --> ACCEPTED: side-chain, well-formed
+[*] --> VALID: full validation OK
+[*] --> INVALID: state transition fails
+[*] --> INVALID_BLOCK_HASH: blockHash != keccak(RLP(header))
+SYNCING --> VALID: data fetched, replayed OK
+SYNCING --> INVALID: replay fails
+ACCEPTED --> VALID: branch becomes canonical
+ACCEPTED --> INVALID: branch invalidated
+VALID --> [*]
+INVALID --> [*]: idempotent cannot become VALID
+INVALID_BLOCK_HASH --> [*]
+note right of INVALID
+latestValidHash:
+32-byte ancestor hash, or
+0x00..00 terminal-PoW failure, or
+null cannot determine
+end note
+note right of VALID
+latestValidHash = payload.blockHash
+end note
+</div>
+<p><code>engine_forkchoiceUpdated</code> response is restricted to <code>{VALID, INVALID, SYNCING}</code> — never <code>ACCEPTED</code> nor <code>INVALID_BLOCK_HASH</code>. <strong>Idempotency invariant:</strong> a payload that returned <code>VALID</code> may never later become <code>INVALID</code>, and vice versa, regardless of subsequent EL state.</p>
+</section>
+
+<section id="startup">
+<h2>2 · Startup choreography</h2>
+<div class="mermaid">
+sequenceDiagram
+autonumber
+participant Op as Operator
+participant CL
+participant EL
+Op->>EL: start authrpc on 8551 with jwt.hex
+Op->>CL: start with execution endpoint and jwt.hex
+CL->>EL: HTTP POST with Authorization Bearer JWT
+EL-->>CL: 200 OK, or 401 on skew/HMAC mismatch
+CL->>EL: engine_exchangeCapabilities(newPayloadV4, FCUV3, getPayloadV5, getBlobsV3)
+EL-->>CL: list of methods EL supports
+CL->>EL: engine_getClientVersionV1(CL version)
+EL-->>CL: EL version
+CL->>EL: engine_forkchoiceUpdatedV3(head, safe, finalized, null)
+alt EL has the head
+EL-->>CL: VALID with payloadId null
+else EL does not have the head
+EL-->>CL: SYNCING with payloadId null
+CL->>CL: enter optimistic mode and suspend validator duties
+end
+</div>
+<p>Post-Merge there is no TTD handshake any more — <code>engine_exchangeTransitionConfigurationV1</code> is deprecated since Cancun. The CL bootstraps either from genesis or from a <em>weak-subjectivity checkpoint state</em>; in both cases it derives the EL block hash of the anchor's <code>latest_execution_payload_header</code> and feeds it as <code>finalizedBlockHash</code> in the very first FCU. The EL responds <code>SYNCING</code> until it has actually downloaded that block and its state.</p>
+<table>
+<thead><tr><th>Client</th><th>JWT default path</th><th>Engine port flag</th><th>Auto-generates JWT?</th></tr></thead>
+<tbody>
+<tr><td>Geth</td><td><code>&lt;datadir&gt;/geth/jwtsecret</code></td><td><code>--authrpc.port</code> (8551)</td><td>Yes</td></tr>
+<tr><td>Nethermind</td><td><code>&lt;datadir&gt;/keystore/jwt-secret</code></td><td><code>JsonRpc.EnginePort</code> (8551)</td><td>Yes</td></tr>
+<tr><td>Erigon</td><td><code>&lt;datadir&gt;/jwt.hex</code></td><td><code>--authrpc.port</code> (8551)</td><td>Yes</td></tr>
+<tr><td>Besu</td><td>none (must supply)</td><td><code>--engine-rpc-port</code> (8551)</td><td>No — operator must pass <code>--engine-jwt-secret</code></td></tr>
+<tr><td>Nimbus-eth1</td><td><code>&lt;datadir&gt;/jwt.hex</code></td><td><code>--engine-api-port</code> (8551; some infra roles use 8550)</td><td>Yes</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="sync">
+<h2>3 · Sync modes</h2>
+<p>Since the Merge, the EL never picks its own sync target — the CL drives it via <code>FCU.headBlockHash</code>. Every EL maps the same Engine API surface onto a different internal sync engine.</p>
+<div class="mermaid">
+sequenceDiagram
+autonumber
+participant CL
+participant EL
+participant Peers as Snap/devp2p peers
+Note over CL: Checkpoint state acquired<br>from trusted finalized beacon state
+CL->>EL: FCU anchor head/safe/finalized, null
+EL-->>CL: SYNCING, lvh null
+EL->>Peers: skeleton headers and snap account ranges
+loop until pivot reached
+Peers-->>EL: headers and state ranges
+end
+EL->>EL: trie healing pass
+Note over EL: pivot reached
+EL->>Peers: forward blocks and execute
+loop CL keeps feeding
+CL->>EL: newPayload(slot N)
+EL-->>CL: SYNCING
+CL->>EL: FCU newer head, safe, finalized
+EL-->>CL: SYNCING
+end
+EL-->>CL: VALID, lvh equals head
+Note over CL: cascade NOT_VALIDATED to VALIDATED for ancestors<br>resume validator duties
+</div>
+<table>
+<thead><tr><th>EL</th><th>Default sync</th><th>Mechanism</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>Geth</td><td>Snap</td><td><code>eth/downloader.BeaconSync</code> + <code>snap/1</code> account/storage range proofs + healing</td><td>Falls back to full at pivot. PBSS default since 1.14</td></tr>
+<tr><td>Nethermind</td><td>Snap</td><td><code>BeaconPivot</code> + <code>BeaconHeadersSyncFeed</code> + <code>SnapSyncFeed</code> orchestrated by <code>MultiSyncModeSelector</code></td><td>Snap requires fast-sync flag conceptually enabled (issue #4131)</td></tr>
+<tr><td>Erigon</td><td>Snapshots + staged</td><td>BitTorrent <code>.seg</code> snapshots (port 42069) + 17-stage pipeline; FCU only triggers single-block Execution+InterHashes at tip</td><td>Snap sync added later; staged is the canonical bulk-loader</td></tr>
+<tr><td>Besu</td><td>Snap (default since 24.3)</td><td><code>DynamicPivotBlockManager</code>; <code>BackwardSyncContext</code> for backfill</td><td>FAST sync deprecated 24.12. CHECKPOINT mode reads pivot from genesis</td></tr>
+<tr><td>Nimbus-eth1</td><td>Era1/Era import</td><td>e2store ingestion + devp2p eth/69 catch-up + <code>nrpc</code> Beacon API replay</td><td>No native snap sync as of April 2026</td></tr>
+</tbody>
+</table>
+<p>For all ELs, beacon-driven sync is <em>idempotent</em> in the FCU: re-issuing FCU with the same head simply re-confirms the target. Geth's <code>delayPayloadImport</code> rejects <code>newPayload</code> while in snap sync — "snap sync relies on direct database injections and cannot afford concurrent out-of-band modifications via imports."</p>
+</section>
+
+<section id="optimistic">
+<h2>4 · Optimistic sync (CL side)</h2>
+<p>Defined in <code>consensus-specs/sync/optimistic.md</code>. The CL imports beacon blocks <em>without</em> verifying their execution payload, accepting EL responses of <code>SYNCING</code> or <code>ACCEPTED</code> as <strong>NOT_VALIDATED</strong>. The block enters fork choice with full LMD weight, but the validator client refuses to attest, propose, or sync-vote.</p>
+<div class="mermaid">
+stateDiagram-v2
+[*] --> NOT_VALIDATED: EL returns SYNCING or ACCEPTED, parent ok
+NOT_VALIDATED --> VALIDATED: EL later returns VALID for this or descendant
+NOT_VALIDATED --> INVALIDATED: EL returns INVALID for this or descendant
+VALIDATED --> [*]
+INVALIDATED --> [*]
+note right of NOT_VALIDATED
+Block in fork choice with weight
+Validator duties forbidden
+Beacon API execution_optimistic equals true
+end note
+note right of INVALIDATED
+Cascade rules:
+lvh ancestor hash invalidates child and descendants
+lvh 0x00..00 invalidates from merge block down
+lvh null invalidates just this block
+lvh unknown is treated as null
+end note
+</div>
+<p><strong>SAFE_SLOTS_TO_IMPORT_OPTIMISTICALLY = 128</strong> (configurable). A block is an optimistic candidate iff its parent already has an execution payload <em>or</em> it is at least 128 slots in the past — protecting only the merge transition block from fork-choice poisoning.</p>
+<div class="callout warn"><strong>Implementation map.</strong> Prysm: <code>ForkChoiceStore.SetOptimisticToInvalid(headRoot, parentRoot, payloadParentHash, lvh)</code> in <code>beacon-chain/blockchain/execution_engine.go</code>. Lighthouse: <code>ProtoArrayForkChoice::process_invalid_execution_payload</code> + <code>ExecutionStatus::{Optimistic,Valid,Invalid}</code>. Teku: <code>ForkChoiceStrategy.applyDeltas</code> with proto-array port. Lodestar: <code>ExecutionPayloadStatus</code> enum in <code>packages/beacon-node/src/execution/engine/interface.ts</code>. Nimbus-eth2: optimistic state in <code>blockchain_dag</code> + <code>el_manager.nim</code>; supports multi-EL violation detection.</div>
+</section>
+
+<section id="steady">
+<h2>5 · Steady-state import &amp; slot timing</h2>
+<div class="mermaid">
+sequenceDiagram
+autonumber
+participant Net as Gossip
+participant CL
+participant EL
+Net->>CL: SignedBeaconBlock(slot N) at t ~= 0..4s
+CL->>CL: gossip-validate proposer, sig, parent, RANDAO
+CL->>CL: state_transition and process_execution_payload
+CL->>EL: engine_newPayloadV4(payload, vh, pbbr, executionRequests)
+EL->>EL: validate header hash, blob hash ordering, requests hash
+EL->>EL: execute and compute roots
+EL-->>CL: PayloadStatusV1 VALID with lvh blockHash
+CL->>CL: on_block, on_attestation, recompute get_head
+CL->>EL: engine_forkchoiceUpdatedV3(head, safe, finalized, null)
+EL-->>CL: payloadStatus VALID, payloadId null
+Net-->>CL: blob or column sidecars
+CL->>EL: engine_getBlobsV3(versionedHashes)
+EL-->>CL: BlobAndProofV2 or null entries from mempool
+</div>
+<h3>Slot timeline (12-second slot, INTERVALS_PER_SLOT=3)</h3>
+<table>
+<thead><tr><th>t</th><th>Event</th><th>Engine call</th></tr></thead>
+<tbody>
+<tr><td>−4 s of slot N (i.e. slot N−1, t=8 s)</td><td>Proposer's CL prepares</td><td>FCU(head, <strong>payloadAttributes</strong>) → payloadId; EL begins build</td></tr>
+<tr><td>0 s</td><td>Slot N starts; proposer publishes block</td><td><code>getPayloadV5</code> (1 s timeout) returns latest build + BlobsBundleV2 + executionRequests</td></tr>
+<tr><td>0–4 s</td><td>Other CLs receive block</td><td><code>newPayloadV4</code> → <code>FCU</code></td></tr>
+<tr><td>4 s</td><td>Attestation deadline</td><td>—</td></tr>
+<tr><td>8 s</td><td>Aggregation deadline</td><td>—</td></tr>
+</tbody>
+</table>
+<p><strong>FCU frequency:</strong> typically 2–4 calls per slot (head update; head flip after attestations; proposer-prep; possibly an override after <code>should_override_forkchoice_update</code>). Anti-pattern: attaching <code>payloadAttributes</code> to every FCU regardless of whether the node will propose — wastes EL build cycles and pollutes the txpool snapshot.</p>
+<h3>MEV-Boost</h3>
+<p>The Engine API has <em>no awareness</em> of builders. mev-boost is a sidecar between CL and relay; the CL signs a blinded block over a <code>SignedBuilderBid</code> header, then either un-blinds it via the relay or — if the relay times out — falls back to the local <code>engine_getPayload</code>. Once the validator has signed <em>either</em> a beacon block or a blinded block for that slot, signing the other is slashable; this is why CLs must always start the local build in parallel.</p>
+</section>
+
+<section id="proposal">
+<h2>6 · Block production</h2>
+<div class="mermaid">
+sequenceDiagram
+autonumber
+participant VC as Validator Client
+participant CL
+participant Relay as MEV-Boost Relay
+participant EL
+VC->>CL: prepare proposer for slot N
+CL->>EL: FCU(head, safe, finalized, PayloadAttributesV3)
+EL-->>CL: VALID with payloadId
+par Local build
+EL->>EL: txpool ordering loop, recommit about every 2s
+and Builder bid
+CL->>Relay: GET builder header for slot, parent, pubkey
+Relay-->>CL: SignedBuilderBid with header, commitments, value
+end
+alt Use builder
+CL->>VC: BlindedBeaconBlock with bid header
+VC-->>CL: SignedBlindedBeaconBlock
+CL->>Relay: POST blinded block
+Relay-->>CL: ExecutionPayloadAndBlobsBundle
+else Local fallback
+CL->>EL: engine_getPayloadV5(payloadId)
+EL-->>CL: executionPayload, blockValue, blobsBundle, override flag, requests
+end
+CL->>CL: assemble and sign SignedBeaconBlock
+CL->>Net: gossip block and blob or column sidecars
+CL->>EL: self-import with engine_newPayloadV4, then FCU
+</div>
+<h3>Per-EL block-builder internals</h3>
+<table>
+<thead><tr><th>EL</th><th>Builder entry point</th><th>Recommit cadence</th><th>Quirk</th></tr></thead>
+<tbody>
+<tr><td>Geth</td><td><code>miner.Miner.BuildPayload</code> → background <code>payload.update()</code> goroutine in <code>miner/payload_building.go</code></td><td>2 s default (<code>miner.DefaultConfig.Recommit</code>)</td><td><code>ResolveFull</code> blocks on <code>cond.Wait()</code> — empty fallback rarely used (issue #28242)</td></tr>
+<tr><td>Nethermind</td><td><code>IPayloadPreparationService.StartPreparingPayload</code> → <code>BlockImprovementContext</code> via <code>BlockImprovementContextFactory</code></td><td>per-improvement interval</td><td>Improvements weren't always cancelled on <code>getPayload</code> (issue #8459)</td></tr>
+<tr><td>Erigon</td><td>Mining stages (<code>stage_mining_create_block</code>, <code>stage_mining_exec</code>, <code>stage_mining_finish</code>); Caplin can drive validator duties in-process</td><td>per-FCU</td><td>Engine API impedance with staged sync was the explicit motivation for Caplin</td></tr>
+<tr><td>Besu</td><td><code>MergeCoordinator</code> → <code>MergeBlockCreator</code> → <code>BlockTransactionSelector</code></td><td><code>--block-txs-selection-max-time</code> (default ~1800 ms)</td><td><code>ConcurrentModificationException</code> on Fusaka devnet 5 (#9186), fixed in 25.x</td></tr>
+<tr><td>Nimbus-eth1</td><td>Local + external builder URL</td><td>—</td><td>Cross-thread JSON in unified binary self-described as "nuts" by the team (PR #3646)</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="reorgs">
+<h2>7 · Reorgs &amp; finality</h2>
+<p>A reorg manifests at the engine layer purely as an FCU whose <code>headBlockHash</code> is not a descendant of the previously-communicated head. The EL must rewind state to the most recent common ancestor, replay the new branch, return orphaned txs to its mempool, and re-emit log subscriptions with <code>removed:true/false</code>.</p>
+<div class="mermaid">
+flowchart LR
+A["A_3"] --> A4["A_4"] --> A5["A_5 - was head"]
+A4 --> B5["B_5 - new head"]
+B5 --> B6["B_6"]
+classDef orphan fill:#2a1414,stroke:#5a2222,color:#fda4a4
+classDef live fill:#0e2316,stroke:#1d5530,color:#86efac
+class A5 orphan
+class A,A4,B5,B6 live
+</div>
+<p><strong>Single-slot reorgs</strong> are driven by proposer boost and the <code>get_proposer_head</code> rule (eight conjoined predicates including <code>head_late</code>, <code>head_weak</code> &lt; 20% committee weight, <code>parent_strong</code> ≥ 160% committee weight, <code>finalization_ok</code> ≤ 2 epochs since finality). Lighthouse pioneered this in production; <code>--disable-proposer-reorgs</code> opts out.</p>
+<p><strong>Deep reorgs</strong> are bounded by FFG finality. The EL is permitted to drop sidechain state and prune below <code>finalizedBlockHash</code>; it must never prune above it. <code>safeBlockHash</code> is the EL hash of the current <em>justified</em> checkpoint — it has no special pruning effect, but is exposed as <code>"safe"</code> on <code>eth_getBlockByNumber</code>.</p>
+</section>
+
+<section id="cancun">
+<h2>8 · Cancun/Deneb (mainnet 13 March 2024)</h2>
+<ul>
+<li><code>engine_newPayloadV3(payload, expectedBlobVersionedHashes, parentBeaconBlockRoot)</code>. The EL <em>must</em> verify, even during sync, that the concatenated <code>blob_versioned_hashes</code> across all type-3 transactions in arrival order equals <code>expectedBlobVersionedHashes</code>; mismatch ⇒ <code>{INVALID, lvh=null}</code>.</li>
+<li><code>BlobsBundleV1 = {commitments[], proofs[], blobs[]}</code> (one KZG proof per blob). EL must verify <code>verify_blob_kzg_proof_batch</code> before returning <code>getPayloadV3</code>.</li>
+<li><code>parentBeaconBlockRoot</code> oracle: contract <code>0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02</code>, system caller <code>0xfff..fffe</code>, <code>HISTORY_BUFFER_LENGTH=8191</code>, dual ring buffers (timestamps + roots).</li>
+<li><strong>KZG split:</strong> EL verifies blob proofs at mempool ingress and at <code>getPayload</code>; CL verifies blob sidecars match commitments via SSZ inclusion proof.</li>
+<li><code>engine_getBlobsV1</code>: opportunistic mempool fetch by versioned hash. Empirical hit rate 70–80 % on mainnet.</li>
+</ul>
+</section>
+
+<section id="prague">
+<h2>9 · Prague/Electra — Pectra (mainnet 7 May 2025)</h2>
+<ul>
+<li><code>engine_newPayloadV4(payload, vh[], pbbr, executionRequests)</code> — adds the <strong>EIP-7685 requests bus</strong>. Each element is <code>request_type || request_data</code>, ascending by type; empty <code>request_data</code> excluded; duplicates / out-of-order / null ⇒ <code>-32602</code>. The EL recomputes <code>requests_hash = sha256(sha256(req_i)..)</code> and folds it into <code>blockHash</code> validation.</li>
+<li>Three request types: <code>0x00</code> deposits (EIP-6110), <code>0x01</code> withdrawal requests (EIP-7002), <code>0x02</code> consolidations (EIP-7251). Collected by EL via predeploy storage / contract events; <em>not</em> in receipts; flow EL→CL.</li>
+<li>EIP-7691 raises blob target/max from 3/6 to 6/9. EIP-7702 adds <code>SET_CODE_TX_TYPE 0x04</code> for EOA delegation. EIP-7549 (CL-only attestation reformat) is transparent to engine API.</li>
+<li><code>engine_forkchoiceUpdatedV3</code> is reused for Prague (no new attribute fields); <code>BlobsBundleV1</code> retained — Pectra did <em>not</em> move to cell proofs.</li>
+</ul>
+</section>
+
+<section id="fusaka">
+<h2>10 · Fusaka/Osaka — PeerDAS (mainnet 3 December 2025)</h2>
+<ul>
+<li><code>engine_getPayloadV5</code> returns <code>BlobsBundleV2</code>: <code>len(proofs) = CELLS_PER_EXT_BLOB × len(blobs) = 128 × N</code>, i.e. one proof per cell after 1D Reed–Solomon extension (128 cells per extended blob, 64 original + 64 extension).</li>
+<li><code>engine_getBlobsV2</code> is all-or-nothing (returns <code>null</code> literal if any hash unknown); <code>engine_getBlobsV3</code> permits per-position <code>null</code> for partial responses (preferred for column reconciliation, PR #671). Pre-Osaka <code>engine_getBlobsV1</code> returns <code>-38005</code>.</li>
+<li><strong>No <code>engine_newPayloadV5</code></strong> in the canonical Osaka spec — payload structure is unchanged; only the bundle and blob-fetch shapes change. Some implementations (Reth doc strings) reference V5 as a forward-looking placeholder for post-Amsterdam; not yet canonical.</li>
+<li>Cell-proof verification: senders pre-compute all 128 cell proofs per blob (off the proposer's critical path). EL mempool batch-verifies on ingress. CL custodies a subset of the 128 columns (4 for full nodes, 128 for supernodes), runs DAS over <code>SAMPLES_PER_SLOT</code> random columns, and reconstructs missing columns when ≥ 50 % are held.</li>
+<li>Blob Parameter-Only forks (EIP-7892) raise target/max without a full upgrade. BPO1 → 10/15 (Dec 2025); BPO2 → 14/21 (Jan 2026). EIP-7918 floors blob basefee against execution gas cost. EIP-7825 caps per-tx gas at 16,777,216. EIP-7934 caps RLP block size at 10 MiB. EIP-7935 raises default gas limit to ~60 M.</li>
+</ul>
+</section>
+
+<section id="expiry">
+<h2>11 · EIP-4444 history expiry &amp; era files</h2>
+<p><strong>Phase 1 live as of 8 July 2025.</strong> All major ELs may drop pre-Merge bodies and receipts (300–500 GB savings). Pre-Merge headers must still be served on devp2p. Phase 2 (rolling 1-year window) is not yet shipped on mainnet as of April 2026; EIP-7801 standardizes range advertising.</p>
+<p>Pre-Merge data is recovered out-of-band from <strong>Era1 files</strong> (e2store TLV, ≤ 8192 blocks per file, snappy framing, accumulator hash), <strong>Era files</strong> (post-Merge beacon archive embedding EL payloads), or the <strong>Portal Network</strong> (Trin, Fluffy, Geth's <code>blsync</code>). Per-client status: Geth/Reth/Erigon/Nethermind/Besu (<code>--era1-import-prepipeline-enabled</code>) all support import; Erigon distributes via BitTorrent natively; Nimbus-eth1 uses Era1+Era as a primary sync mode.</p>
+</section>
+
+<section id="failures">
+<h2>12 · Failure modes &amp; edge cases</h2>
+<table>
+<thead><tr><th>Scenario</th><th>Expected behavior</th><th>Common pitfall</th></tr></thead>
+<tbody>
+<tr><td>EL crash mid-call</td><td>CL hits 8 s timeout; retries on next slot tick. EL must idempotently re-accept the same payload.</td><td>Some CLs re-FCU before <code>newPayload</code> returns — must serialize per-EL connection.</td></tr>
+<tr><td>JWT skew &gt; 60 s</td><td>HTTP 401; CL backs off exponentially. Indistinguishable from secret mismatch.</td><td>NTP not configured; container clock drift.</td></tr>
+<tr><td>JWT rotation</td><td>Not specified — all major clients require restart for reload.</td><td>Operators must orchestrate staggered restart; otherwise both sides 401.</td></tr>
+<tr><td>EL out of disk</td><td><code>-32000 Server error</code> with <code>data.err</code> string; CL retries.</td><td>Some ELs return <code>-32603</code> instead.</td></tr>
+<tr><td>Hash mismatch</td><td><code>{INVALID_BLOCK_HASH, lvh=null}</code> (Shanghai+ folds into <code>{INVALID, null}</code>).</td><td>CL must penalize the gossip peer.</td></tr>
+<tr><td>parentBeaconBlockRoot mismatch</td><td>CL detects via header field vs CL state divergence ⇒ INVALID at fork choice.</td><td>EL does not validate against CL state — relies on the value passed in.</td></tr>
+<tr><td>executionRequests commitment mismatch</td><td>EL returns <code>{INVALID, lvh=null}</code>.</td><td>—</td></tr>
+<tr><td>Skipped slots</td><td>Multiple FCUs without <code>newPayload</code>; EL processes in receive order, refreshes safe/finalized.</td><td>—</td></tr>
+<tr><td>Many-to-one CL→EL</td><td>Spec: undefined unless exactly one CL drives FCU; secondaries may only <code>newPayload</code>.</td><td>Nimbus-eth2's multi-EL mode reverses this — one CL polls multiple ELs as violation detector.</td></tr>
+<tr><td>FCU timestamp ≤ parent</td><td><code>-38003</code>; <strong>forkchoice itself must not roll back</strong>.</td><td>Easy to mis-implement.</td></tr>
+</tbody>
+</table>
+<p><strong>Cascade INVALIDATION:</strong> when <code>newPayload(P)</code> returns <code>INVALID, lvh=H</code>, the CL marks <code>P</code> and all descendants invalid in fork choice; EL caches the bad subtree to short-circuit future calls. <code>lvh=0x00..00</code> is reserved for terminal-PoW invalidity; <code>lvh=null</code> means "only this block."</p>
+</section>
+
+<section id="pairs">
+<h2>13 · Pairing matrix &amp; historical incidents</h2>
+<table>
+<thead><tr><th>CL ↓ / EL →</th><th>Geth</th><th>Nethermind</th><th>Besu</th><th>Erigon</th><th>Reth</th></tr></thead>
+<tbody>
+<tr><td>Lighthouse</td><td class="ok">✅ Most-tested</td><td class="ok">✅</td><td class="ok">✅</td><td class="meh">⚠ Lower blob inclusion (Dencun)</td><td class="ok">✅</td></tr>
+<tr><td>Prysm</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td><td class="meh">⚠</td><td class="ok">✅</td></tr>
+<tr><td>Teku</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅ Sister project</td><td class="meh">⚠</td><td class="ok">✅</td></tr>
+<tr><td>Lodestar</td><td class="ok">✅</td><td class="meh">⚠ (NethermindEth/nethermind#7117 Holesky 2024 — handshake quirk, since fixed)</td><td class="ok">✅</td><td class="ok">✅</td><td class="ok">✅</td></tr>
+<tr><td>Nimbus</td><td class="ok">✅</td><td class="ok">✅ Most common in Lido CSM</td><td class="ok">✅</td><td class="meh">⚠ URL parsing hardened in v23.3.1</td><td class="ok">✅</td></tr>
+</tbody>
+</table>
+<h3>Notable incidents</h3>
+<ul>
+<li><strong>11–12 May 2023 — mainnet finality delay (Prysm + Teku):</strong> old-target attestations triggered state-replay death spiral; Lighthouse simply dropped them. Fixed in Prysm v4.0.4 / Teku v23.5.0.</li>
+<li><strong>21 Jan 2024 — Nethermind v1.23–1.25 consensus bug:</strong> revert-message overflow in PR #6226 produced divergent block hashes; ~8 % of validators offline ~hours; v1.25.2 hotfix.</li>
+<li><strong>13 Mar 2024 — Cancun mainnet:</strong> activated cleanly across all clients; Geth blobpool unclean-shutdown (#28990) was the long-tail issue.</li>
+<li><strong>24 Feb – 10 Mar 2025 — Holesky non-finality:</strong> Geth + Nethermind + Besu all shipped wrong Holesky deposit-contract address. Reth + Erigon were the correct minority. ~56 k validators slashed; Hoodi testnet spun up. Lodestar shipped <code>holesky-rescue</code> branch (heap → 32 GB, checkpoint-state cap reduced).</li>
+<li><strong>7 May 2025 — Pectra mainnet:</strong> uneventful.</li>
+<li><strong>3 Dec 2025 — Fusaka mainnet:</strong> finalized within ~15 minutes.</li>
+<li><strong>4 Dec 2025 — Prysm v7.0.0 near-miss:</strong> old-state generation on outdated attestations; participation dropped to 74.7 %. Workaround flag <code>--disable-last-epoch-targets</code> (was opt-in, should have been default).</li>
+<li><strong>Late 2025/early 2026 — Nimbus-eth2 Merkle-cache bug:</strong> v26.2.0 falsely rejected a valid mainnet block; v26.2.1 fix.</li>
+</ul>
+<h3>Resource profile (post-Dencun, MigaLabs Feb–May 2024 + 2025 updates)</h3>
+<table>
+<thead><tr><th>CL</th><th>RAM</th><th>CL DB</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>Lighthouse</td><td>2–4 GB</td><td>100–200 GB</td><td>LevelDB; hierarchical state diffs</td></tr>
+<tr><td>Prysm</td><td>4–8 GB</td><td>150–200 GB</td><td>Goroutine model</td></tr>
+<tr><td>Teku</td><td>4–8 GB JVM heap</td><td>100–200 GB</td><td>Default DB moved Lvl→Rocks Dec 2025</td></tr>
+<tr><td>Lodestar</td><td>3–6 GB (V8 cap)</td><td>~150 GB</td><td>Holesky-rescue raised cap to 32 GB</td></tr>
+<tr><td>Nimbus</td><td>0.5–2 GB <strong>(lowest)</strong></td><td>80–200 GB</td><td>Multi-EL violation detector unique</td></tr>
+</tbody>
+</table>
+</section>
+
+<hr class="fade">
+
+<section id="geth">
+<h2>EL · Geth (go-ethereum)</h2>
+<ul>
+<li><strong>Engine package:</strong> <code>eth/catalyst/</code> — <code>ConsensusAPI</code> struct in <code>api.go</code> (~1230 LoC). Methods: <code>NewPayloadV1..V5</code>, <code>ForkchoiceUpdatedV1..V4</code>, <code>GetPayloadV1..V6</code>, <code>GetBlobsV1..V3</code>, plus stateless witness variants (<code>NewPayloadWithWitnessV1..V4</code>, <code>ExecuteStatelessPayloadV1..V4</code>).</li>
+<li><strong>Locks:</strong> <code>forkchoiceLock</code> + <code>newPayloadLock</code> serialize concurrent calls (CL retry race during DB compaction).</li>
+<li><strong>Sync:</strong> <code>eth/downloader.BeaconSync(mode, head, final)</code> + <code>BeaconExtend</code>; <code>delayPayloadImport</code> rejects <code>newPayload</code> while in snap mode. <code>SetBadBlockCallback(api.setInvalidAncestor)</code> wires bad-block discovery.</li>
+<li><strong>Block production:</strong> <code>miner.BuildPayload</code> + <code>payload.update()</code> goroutine, <code>Recommit=2s</code>. No native MEV-Boost; Flashbots <code>builder</code> fork adds it externally.</li>
+<li><strong>Blobpool:</strong> <code>core/txpool/blobpool/</code> backed by <code>holiman/billy</code> file shelves (<code>&lt;datadir&gt;/geth/blobpool/</code>); 2.5 GB datacap, persisted across restarts. <code>BlobPool.reinject</code> handles V0→V1 migration at Osaka (~140 ms/blob on M1 Pro per code comment).</li>
+<li><strong>State:</strong> PBSS default since 1.14 (<code>--state.scheme=path</code>); inline pruning bounded by <code>StateHistory</code> (~90 000 blocks). HBSS→PBSS migration historically produced "missing trie node" errors.</li>
+<li><strong>Quirks:</strong> blobpool corruption #28990 (1.13.11/12); <code>ResolveFull</code> blocks on <code>cond.Wait</code> #28242; eth/68 removed in 1.17.x (only eth/69+).</li>
+<li><strong>blsync:</strong> <code>cmd/blsync</code> + <code>beacon/light/</code> drives any EL via Engine API using a beacon light client.</li>
+</ul>
+</section>
+
+<section id="nethermind">
+<h2>EL · Nethermind</h2>
+<ul>
+<li><strong>Engine plugin:</strong> <code>src/Nethermind/Nethermind.Merge.Plugin/</code> — <code>EngineRpcModule : IEngineRpcModule</code> dispatches to per-method handlers (<code>ForkchoiceUpdatedHandler</code>, <code>NewPayloadHandler</code>, <code>GetPayloadV1..V5Handler</code>, <code>GetBlobsHandler</code>). 14-arg DI in handler constructors (incl. <code>IInvalidChainTracker</code>, <code>IMergeSyncController</code>, <code>IBeaconPivot</code>).</li>
+<li><strong>Routing:</strong> <code>JsonRpcProcessor</code> registers engine namespace on a separate host/port (<code>JsonRpc.EngineHost</code>, default 127.0.0.1:8551). <code>ResultWrapper&lt;T&gt;</code> is the universal return type.</li>
+<li><strong>Sync:</strong> <code>MultiSyncModeSelector</code> picks among <code>FullSync</code>, <code>SnapSync</code>, <code>FastSync</code>, <code>BeaconHeaders</code>, etc. Snap default since v1.14 (late 2022). Beacon-driven via <code>BeaconPivot</code> + <code>MergeSyncController</code> + <code>BeaconHeadersSyncFeed</code>.</li>
+<li><strong>Engine GC tuning:</strong> <code>Merge.PrioritizeBlockLatency=true</code> suppresses GC during Engine calls; <code>Merge.SweepMemory=Gen1</code>; <code>Merge.MemoryCompaction=Yes</code>.</li>
+<li><strong>Block production:</strong> <code>PayloadPreparationService</code> + <code>BlockImprovementContext</code>. Improvements weren't always cancelled on <code>getPayload</code> — issue #8459.</li>
+<li><strong>Blobs:</strong> <code>BlobTxStorage</code> in RocksDB; <code>BlobTxDistinctSortedPool</code> in mempool.</li>
+<li><strong>Quirks:</strong> <strong>21 Jan 2024 consensus bug</strong> (revert-message overflow PR #6226); v1.25.2 hotfix. <strong>v1.35.1 withdrawn</strong> for "block production and sync issues." <code>FastSyncEnabled = FastSync || SnapSync</code> caused user confusion (#4131). DB corruption hard-fail changed to <code>Environment.Exit</code> in 1.35.x. Nethermind co-authored 7 of the 12 Fusaka EIPs.</li>
+</ul>
+</section>
+
+<section id="erigon">
+<h2>EL · Erigon (and Caplin)</h2>
+<ul>
+<li><strong>Staged sync:</strong> 17 stages in <code>eth/stagedsync/</code> — Snapshots, Headers, CumulativeIndex, BlockHashes, Bodies, Senders, Execution, HashState, IntermediateHashes, Account/StorageHistoryIndex, LogIndex, CallTraces, TxLookup, Finish. Each has <code>ExecFunc</code>+<code>UnwindFunc</code>. ETL framework buffers writes, heap-merges to MDBX.</li>
+<li><strong>Engine API:</strong> <code>turbo/engineapi/EngineServer</code>. <code>newPayload</code> at tip runs single-block Execution+InterHashes, not a full pipeline. The block-by-block Engine API is acknowledged as an impedance mismatch with batched staged execution (issue #7173).</li>
+<li><strong>Caplin:</strong> in-process CL under <code>cl/</code> — default in Erigon 3 (<code>--externalcl=false</code>). Communicates with execution in-process via <code>execution_client.ExecutionEngine</code> interface; <code>--caplin.use-engine-api</code> falls back to standard Engine API for testing/degraded networks. Discv5 on UDP 4000 / TCP 4001. Erigon 3 markets itself as "the world's first all-in-one EVM node" with validator/proposer support.</li>
+<li><strong>State:</strong> MDBX (libmdbx) with <code>plain state</code> (raw 20-byte address keys; HashedState derived only for compatibility). Erigon 3 introduces domain/history/idx/accessor file layout, transaction-granular history, no receipts stored by default (re-executed on demand). E3.3 added historical proofs via Elias-Fano (<code>--prune.include-commitment-history</code>).</li>
+<li><strong>Process model:</strong> txpool, sentry (P2P), downloader, rpcdaemon can run as separate binaries over private gRPC (9090 default; reserved 9092/9093/9094).</li>
+<li><strong>Block production:</strong> mining stages (<code>stage_mining_create_block/exec/finish</code>); fixed in #3575 ("Hanging ForkChoice").</li>
+<li><strong>Quirks:</strong> issue #9786 <code>context canceled</code> on heavy RPC load. HDD mode "stays a few blocks behind tip." E3.1 deprecated E2 in May 2025.</li>
+</ul>
+</section>
+
+<section id="besu">
+<h2>EL · Besu</h2>
+<ul>
+<li><strong>Engine methods:</strong> <code>org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.*</code> — <code>EngineNewPayloadV1..V4</code>, <code>EngineForkchoiceUpdatedV1..V3</code>, <code>EngineGetPayloadV1..V4</code>, <code>EngineGetBlobsV1/V2</code>, <code>EngineExchangeCapabilities</code>. Wired in <code>ExecutionEngineJsonRpcMethods</code> (V4 filtered out pre-Prague).</li>
+<li><strong>Stack:</strong> Vert.x + Netty; default Engine port 8551, host allowlist defaults to <code>localhost,127.0.0.1</code>; <code>--engine-jwt-secret</code> required (no auto-gen).</li>
+<li><strong>Plugin SDK:</strong> <code>BesuPlugin</code> via <code>ServiceLoader</code>; <code>BesuContext</code>, <code>RpcEndpointService</code>, <code>BlockchainService</code>, <code>TransactionPoolService</code>. Most builder/MEV integrations hook here.</li>
+<li><strong>Controller:</strong> <code>BesuControllerBuilder</code> assembles <code>ProtocolSchedule</code>, <code>EthProtocolManager</code>, <code>DefaultSynchronizer</code>, <code>MergeCoordinator</code>, <code>WorldStateArchive</code>. Subclasses for IBFT/QBFT/Clique merged with <code>MergeBesuControllerBuilder</code>.</li>
+<li><strong>Sync:</strong> SNAP default since 24.3 (PR #4462 moved pivot to CL safe block); FAST deprecated 24.12. <code>BackwardSyncContext</code> handles backfill (issue #5411 documents 2023 thrash with Nimbus on Sepolia).</li>
+<li><strong>Bonsai vs Forest:</strong> Bonsai (default since 24.3) keeps flat key-value state with per-block <code>TrieLog</code>; ~650 GB full-node footprint, O(1) account lookups. <code>--bonsai-historical-block-limit</code> default 512. <code>--bonsai-limit-trie-logs-enabled</code> default-on since 24.6. Bonsai cut block-import median from 1.71 s → 0.49 s on m6a.xlarge. Forest required for archive (~12 TB).</li>
+<li><strong>Block production:</strong> <code>MergeBlockCreator</code> + <code>BlockTransactionSelector</code>; <code>--block-txs-selection-max-time</code> ~1800 ms.</li>
+<li><strong>Quirks:</strong> JVM heap tuning needed (~8 GB recommended). #6896 OOM with Blockscout. Native crypto post-Pectra broke Windows mainnet (#8418). 25.x parallel state-root computation (#9576) and parallel tx processing.</li>
+</ul>
+</section>
+
+<section id="nimbus-el">
+<h2>EL · Nimbus-eth1</h2>
+<ul>
+<li><strong>Status:</strong> mainnet-eligible but minority. Directory renamed <code>nimbus/</code> → <code>execution_chain/</code>; binary <code>nimbus_execution_client</code>. PR #3646 introduced a single <code>nimbus</code> binary bundling EL+CL in two threads sharing a datadir (the team self-criticizes the "JSON between threads" wiring).</li>
+<li><strong>Engine API:</strong> <code>execution_chain/rpc/engine_api.nim</code>. Implements V1..V4 + getBlobsV1/V2 + capabilities. Built on <code>nim-json-rpc</code> + <code>nim-web3</code>.</li>
+<li><strong>Sync:</strong> Era1 (pre-Merge) + Era (post-Merge) ingest is the primary mainnet bootstrap (~few days); devp2p eth/68+ for tip; <code>nrpc sync</code> binary replays via Beacon API; pre-synced DB tarball from <code>eth1-db.nimbus.team</code>. <strong>No native snap sync as of April 2026.</strong></li>
+<li><strong>State:</strong> Aristo flat-state on RocksDB (replaced earlier hexary impl).</li>
+<li><strong>Portal:</strong> <code>portal/</code> directory (formerly <code>fluffy/</code>) — separate <code>nimbus_portal_client</code> binary; long-stated plan to integrate Portal into the EL is partial.</li>
+<li><strong>Verified Proxy:</strong> <code>nimbus_verified_proxy/</code> — light-client + <code>eth_getProof</code> wrapper turning untrusted RPC providers into trustless sources.</li>
+<li><strong>Why interesting:</strong> Nim compiles to C, small binaries, low GC pressure, runs on Pi/Android (Termux).</li>
+</ul>
+</section>
+
+<section id="prysm">
+<h2>CL · Prysm</h2>
+<ul>
+<li><strong>Repo:</strong> moved to <code>github.com/OffchainLabs/prysm</code>; module path <code>github.com/OffchainLabs/prysm/v7/...</code>.</li>
+<li><strong>Engine client:</strong> <code>beacon-chain/execution/{service.go,engine_client.go,rpc_client.go}</code> — <code>execution.Service</code> wraps go-ethereum's <code>rpc.Client</code> with a <code>jwtTransport</code>. Sentinel errors: <code>ErrAcceptedSyncingPayloadStatus</code>, <code>ErrInvalidPayloadStatus</code>.</li>
+<li><strong>Block processing:</strong> <code>beacon-chain/blockchain/execution_engine.go</code> — <code>Service.notifyForkchoiceUpdate</code> and <code>Service.notifyNewPayload</code>. INVALID handling: calls <code>ForkChoiceStore.SetOptimisticToInvalid(headRoot, parentRoot, payload.ParentHash, lvh)</code>, <code>removeInvalidBlockAndState</code>, recurses to <code>ForkChoiceStore.FullHead</code>, re-issues FCU.</li>
+<li><strong>Sync:</strong> <code>beacon-chain/sync/initial-sync</code> FSM-driven; <code>regular-sync</code>; <code>backfill</code>.</li>
+<li><strong>Builder/MEV-Boost:</strong> <code>beacon-chain/builder/Service</code> with circuit-breaker (<code>--max-builder-epoch-missed-slots</code>, default lowered to 5 in v4.0). v7.x raised default builder gas limit 45M→60M.</li>
+<li><strong>Incidents:</strong> Apr 2021 deposit-tree bug; <strong>11–12 May 2023</strong> old-target attestation state-replay (fixed v4.0.4); <strong>4 Dec 2025</strong> Fusaka near-miss in v7.0.0 — same conceptual class (~382 ETH attestation rewards lost; <code>--disable-last-epoch-targets</code>).</li>
+</ul>
+</section>
+
+<section id="lighthouse">
+<h2>CL · Lighthouse</h2>
+<ul>
+<li><strong>Engine client:</strong> <code>beacon_node/execution_layer/</code>. <code>ExecutionLayer&lt;E:EthSpec&gt;</code> wraps <code>Inner</code>; <code>Engine</code> struct holds <code>HttpJsonRpc</code>, <code>payload_id_cache: LruCache</code>, <code>state: RwLock&lt;State&gt;</code> (Synced/Online/Offline/AuthFailed), <code>latest_forkchoice_state</code>. <code>EngineApi</code> trait in <code>engine_api.rs</code>; auth via <code>jsonwebtoken</code> in <code>auth.rs</code>.</li>
+<li><strong>Block processing:</strong> <code>BeaconChain&lt;T&gt;::process_block</code> returns <code>Result&lt;AvailabilityProcessingStatus, BlockError&gt;</code>; <code>PayloadVerificationStatus::{Valid,Optimistic,Verified}</code>; <code>execution_payload.rs</code> contains <code>notify_new_payload</code>, <code>process_payload_status</code>.</li>
+<li><strong>Fork choice:</strong> originator of <code>proto_array</code> (cache-friendly array-backed DAG) — <code>consensus/proto_array/</code>; <code>ExecutionStatus::{Optimistic,Valid,Invalid}</code> recorded per node.</li>
+<li><strong>Sync:</strong> <code>SyncManager</code> in <code>beacon_node/network/src/sync/</code>; <code>RangeSync</code>, <code>BlockLookups</code>, <code>BackFillSync</code>. Backfill rate-limited since v4.1 (~20 slots/s).</li>
+<li><strong>Validator/builder:</strong> <code>ExecutionLayer::get_full_payload_caching</code> races local vs builder; <code>--always-prefer-builder-payload</code> since v3.5.</li>
+<li><strong>DB/state:</strong> LevelDB; hierarchical state diffs (<code>cold_hdiff_buffer_cache_size</code>, <code>hot_hdiff_buffer_cache_size</code>).</li>
+<li><strong>Client-share concern:</strong> ~52–56 % of CL nodes (Dec 2025 MigaLabs). Pioneered proposer boost (40 % weight, default since v2.5). "Fullhouse" experiment embeds Reth as a library (<code>RethEngineApi</code> calling <code>ConsensusEngineHandle</code> directly).</li>
+</ul>
+</section>
+
+<section id="teku">
+<h2>CL · Teku</h2>
+<ul>
+<li><strong>Engine client:</strong> <code>ethereum/executionclient/</code>. Channel stack: <code>ExecutionLayerChannel</code> (renamed from <code>ExecutionEngineChannel</code>) ← <code>ExecutionLayerManagerImpl</code> ← <code>ExecutionEngineClient</code> ← <code>Web3JExecutionEngineClient</code> (Web3j + OkHttp). All async over Teku's <code>SafeFuture&lt;T&gt;</code>.</li>
+<li><strong>Block processing:</strong> <code>BlockImporter</code> → <code>BlockManager</code> → <code>ForkChoice.onBlock</code> → <code>StateTransition.initiate</code>. <code>MergeTransitionBlockValidator</code> validates terminal block conditions.</li>
+<li><strong>Sync:</strong> <code>ForwardSync</code> + <code>BackwardSync</code> + <code>SyncStateTracker</code> (STARTING/SYNCING/IN_SYNC/OPTIMISTIC). Checkpoint sync via <code>--checkpoint-sync-url</code> or <code>--initial-state</code>; only block root stored at checkpoint (Lighthouse stores both block and state).</li>
+<li><strong>Builder API:</strong> <code>--builder-endpoint</code>, <code>--builder-bid-compare-factor</code> (default 90 %); registrations sent in batches of 100.</li>
+<li><strong>JVM:</strong> Java 21 today, Java 25 incoming; ~4–8 GB heap recommended; <code>SafeFuture</code> + <code>AsyncRunner</code> framework. <strong>Web3Signer</strong> external signer is the production validator setup (slashing-protection DB, HSM/Vault).</li>
+<li><strong>Incidents:</strong> 11–12 May 2023 old-target attestations (with Prysm); Aug 2022 Besu pairing timeouts (<code>engine_exchangeTransitionConfiguration</code>); Mar 2026 mainnet beacon-state serialization regression (mandatory release); Dec 2025 default DB LevelDB→RocksDB migration requiring re-checkpoint-sync.</li>
+</ul>
+</section>
+
+<section id="lodestar">
+<h2>CL · Lodestar</h2>
+<ul>
+<li><strong>Maintainer:</strong> ChainSafe; Apache-2.0 monorepo at <code>github.com/ChainSafe/lodestar</code>. Increasing Zig adoption for performance-critical paths (repo description: "Zig and TypeScript ecosystem"). Strong light-client lineage (<code>@lodestar/light-client</code> runs in browsers).</li>
+<li><strong>Engine client:</strong> <code>packages/beacon-node/src/execution/engine/</code>. <code>ExecutionPayloadStatus</code> enum mirrors EL responses. CLI: <code>--execution.urls</code>, <code>--jwt-secret</code>, <code>--jwtId</code>.</li>
+<li><strong>Validator client:</strong> separate process via Beacon REST API (not in-process by default).</li>
+<li><strong>Sync:</strong> SyncManager + RangeSync + UnknownBlockSync + Backfill — same pattern as Lighthouse; checkpoint sync via <code>--checkpointSyncUrl</code>.</li>
+<li><strong>V8 constraint:</strong> single-threaded event loop is the performance ceiling; selective <code>worker_threads</code> for keystore decryption (5× speedup). Default 8 GB heap; <code>holesky-rescue</code> branch raised to 32 GB.</li>
+<li><strong>Holesky 2025:</strong> followed Geth onto bad chain; constant OOM until patches; checkpoint-states ballooned to ~250 MB each (~56 GB/day) until <code>DEFAULT_MAX_CP_STATE_ON_DISK</code> patch (PR #7510). Postmortem at blog.chainsafe.io.</li>
+<li><strong>Pairing quirk:</strong> Lodestar+Nethermind handshake bug on Holesky (NethermindEth/nethermind#7117) — only reproducible with Lodestar; since fixed.</li>
+</ul>
+</section>
+
+<section id="nimbus-cl">
+<h2>CL · Nimbus-eth2</h2>
+<ul>
+<li><strong>Engine client:</strong> <code>beacon_chain/el/el_manager.nim</code>. <strong>Multi-EL is unique:</strong> multiple <code>--el</code> URLs simultaneously; "Nimbus will act as an execution layer consensus violation detector, preventing the publishing of blocks that may trigger a catastrophic partitioning in the network." Per-URL JWT via <code>#jwt-secret-file=</code> URL fragments. Metrics: <code>engine_api_responses</code>, <code>engine_api_request_duration_seconds</code>, <code>engine_api_timeouts</code>.</li>
+<li><strong>Eth1:</strong> <code>beacon_chain/eth1/eth1_monitor.nim</code> (legacy deposit follower).</li>
+<li><strong>Sync:</strong> SyncManager + RequestManager; trusted-node sync (their term for checkpoint sync); era files as cold store; <code>nrpc sync</code> tool for EL-via-CL recovery.</li>
+<li><strong>Validator:</strong> in-process by default; standalone <code>nimbus_validator_client</code> supports M-of-N sentry-node setups (multi-Beacon-Node attestation).</li>
+<li><strong>Resource posture:</strong> lowest CPU+RAM in MigaLabs Feb–May 2024 baseline. Goal: Pi-class hardware. <code>holesky-rescue</code> equivalents not needed because Nimbus survived with stable memory.</li>
+<li><strong>Incidents:</strong> v24.2.2 EIP-7044 incomplete (Holesky/Deneb near-miss); v26.2.0/.1 Merkle-tree cache invalidation in <code>nim-ssz-serialization</code> caused mainnet false-rejection of a valid block — operators on v26.1.0 or earlier "should verify they're still on the canonical chain, restart Nimbus otherwise."</li>
+<li><strong>Share:</strong> Blockprint shows ~0.12 % (likely undercount due to classifier ambiguity with Teku); Rated.Network 3.12 % validator share is more credible.</li>
+</ul>
+</section>
+
+<hr class="fade">
+
+<section id="errors">
+<h2>Appendix · Engine API error codes</h2>
+<table>
+<thead><tr><th>Code</th><th>Message</th><th>Trigger</th></tr></thead>
+<tbody>
+<tr><td>-32700</td><td>Parse error</td><td>Invalid JSON</td></tr>
+<tr><td>-32600</td><td>Invalid Request</td><td>Malformed request object</td></tr>
+<tr><td>-32601</td><td>Method not found</td><td>Unknown method</td></tr>
+<tr><td>-32602</td><td>Invalid params</td><td>Type/shape mismatch; <code>executionRequests</code> ordering/uniqueness violations</td></tr>
+<tr><td>-32603</td><td>Internal error</td><td>Generic JSON-RPC internal</td></tr>
+<tr><td>-32000</td><td>Server error</td><td>Generic; only error returning structured <code>data:{err:"..."}</code></td></tr>
+<tr><td>-38001</td><td>Unknown payload</td><td><code>engine_getPayload</code> with unknown payloadId</td></tr>
+<tr><td>-38002</td><td>Invalid forkchoice state</td><td>Safe/finalized not ancestor of head</td></tr>
+<tr><td>-38003</td><td>Invalid payload attributes</td><td>Timestamp ≤ parent; shape failure</td></tr>
+<tr><td>-38004</td><td>Too large request</td><td><code>getBlobs</code> &gt;128, <code>getPayloadBodiesByRange</code> oversize</td></tr>
+<tr><td>-38005</td><td>Unsupported fork</td><td>Timestamp outside method's fork window</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="caveats">
+<h2>Appendix · Spec uncertainties (April 2026)</h2>
+<ul>
+<li><strong>No <code>fusaka.md</code> in execution-apis</strong> — the post-Prague file is <code>osaka.md</code>. "Fusaka" is the combined Fulu (CL) + Osaka (EL) hardfork name in operator parlance.</li>
+<li><strong>No <code>engine_newPayloadV5</code></strong> in canonical Osaka spec; Reth doc strings reference an "amsterdam.md" placeholder.</li>
+<li><strong>EIP-4444 Phase 2</strong> (rolling 1-year window) not yet shipped on mainnet despite some 2025 press conflating it with Phase 1.</li>
+<li><strong>BPO1/BPO2 activation slots</strong> have minor discrepancies across sources (Foundation announcement vs secondary outlets — Dec 9 vs Dec 17 for BPO1).</li>
+<li><strong>ACCEPTED vs SYNCING</strong> divergence: some ELs never return ACCEPTED. <strong>INVALID_BLOCK_HASH</strong> phasing out per #270 — modern clients fold into <code>{INVALID, lvh=null}</code>.</li>
+<li><strong>JWT hot reload</strong> not specified — all major clients require restart.</li>
+<li><strong>Nimbus-eth1 default Engine port</strong>: 8551 in user-facing docs, 8550 in some Status-internal Ansible roles. Verify per release.</li>
+<li><strong>Erigon Caplin "Phase" maturity:</strong> the team blog claims Phase 2 (in-process Erigon API) shipped, but the existence of <code>--caplin.use-engine-api</code> shows Engine-API remains a supported in-process path.</li>
+<li><strong>April 2024 Nethermind incident</strong> referenced in some narratives appears to conflate with the <strong>21 January 2024</strong> consensus bug (revert-message overflow); a distinct April 2024 mainnet incident is not corroborated by primary sources.</li>
+<li><strong>"April 2023 Capella issue":</strong> the actual Prysm/Teku finality delay was <strong>11–12 May 2023</strong>, post-Capella, not at Capella activation.</li>
+</ul>
+</section>
+
+</main>
+</div>
+</body>
+</html>
