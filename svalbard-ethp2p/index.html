@@ -1714,6 +1714,12 @@ document.addEventListener('DOMContentLoaded', function() {
   let maxPanY = 0;
   let trimmedHeight = originalHeight;
   let contentRight = originalWidth;
+  const maxViewportWidth = 2056;
+  const maxViewportHeight = 1198;
+  const maxViewportScale = Math.max(
+    maxViewportWidth / originalWidth,
+    maxViewportHeight / originalHeight,
+  );
 
   document.documentElement.style.overflow = 'hidden';
   document.documentElement.style.backgroundColor = '#282828';
@@ -1868,10 +1874,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const h = document.documentElement.clientHeight;
     const widthScaledAmount = w / originalWidth;
     const heightScaledAmount = h / originalHeight;
-    const screenWidth = window.screen?.availWidth || window.screen?.width || w;
-    const screenHeight = window.screen?.availHeight || window.screen?.height || h;
-    const maxScreenScale = Math.max(screenWidth / originalWidth, screenHeight / originalHeight);
-    scale = Math.min(Math.max(widthScaledAmount, heightScaledAmount), maxScreenScale);
+    scale = Math.min(Math.max(widthScaledAmount, heightScaledAmount), maxViewportScale);
     maxPanX = Math.max(0, contentRight * scale - w);
     maxPanY = Math.max(0, trimmedHeight * scale - h);
     clampPan();
