@@ -48,6 +48,74 @@
             display: none;
         }
 
+        .trimmed-empty {
+            display: none;
+        }
+
+        #deck-stage {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 726px;
+            height: 720px;
+            transform-origin: top left;
+            will-change: transform;
+        }
+
+        .scroll-indicator {
+            position: fixed;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 120ms ease;
+            color: rgba(251, 241, 199, 0.72);
+            text-shadow: 0 1px 8px rgba(40, 40, 40, 0.9);
+            font: 700 32px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        .scroll-indicator.visible {
+            opacity: 1;
+        }
+
+        .scroll-indicator.up {
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .scroll-indicator.down {
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .scroll-indicator.left {
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .scroll-indicator.right {
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .page-number-overlay {
+            position: fixed;
+            right: 18px;
+            bottom: 12px;
+            z-index: 9;
+            color: rgba(235, 219, 178, 0.86);
+            font: 500 14px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            text-shadow: 0 1px 8px rgba(40, 40, 40, 0.9);
+            pointer-events: none;
+        }
+
+        .presenterm-page-number {
+            visibility: hidden;
+        }
+
         @page {
             margin: 0;
             height: 720px;
@@ -1613,9 +1681,116 @@
 let originalWidth = 726;
 let originalHeight = 720;
 document.addEventListener('DOMContentLoaded', function() {
-  const allLines = document.querySelectorAll('body > div');
-  const pageBreakMarkers = document.querySelectorAll('.container');
+  const allLines = Array.from(document.querySelectorAll('body > .container'));
+  const pageBreakMarkers = allLines;
   let currentPageIndex = 0;
+  let scale = 1;
+  let panX = 0;
+  let panY = 0;
+  let maxPanX = 0;
+  let maxPanY = 0;
+  let trimmedHeight = originalHeight;
+  let contentRight = originalWidth;
+
+  document.documentElement.style.overflow = 'hidden';
+  document.documentElement.style.backgroundColor = '#282828';
+  document.body.style.width = '100vw';
+  document.body.style.height = '100vh';
+  document.body.style.overflow = 'hidden';
+  document.body.style.transform = 'none';
+
+  const stage = document.createElement('div');
+  stage.id = 'deck-stage';
+  document.body.insertBefore(stage, allLines[0]);
+  allLines.forEach((slide) => stage.appendChild(slide));
+
+  const indicators = {
+    up: makeIndicator('up', '▲'),
+    down: makeIndicator('down', '▼'),
+    left: makeIndicator('left', '◀'),
+    right: makeIndicator('right', '▶'),
+  };
+  const pageNumberOverlay = document.createElement('div');
+  pageNumberOverlay.className = 'page-number-overlay';
+  document.body.appendChild(pageNumberOverlay);
+
+  function makeIndicator(direction, glyph) {
+    const element = document.createElement('div');
+    element.className = `scroll-indicator ${direction}`;
+    element.setAttribute('aria-hidden', 'true');
+    element.textContent = glyph;
+    document.body.appendChild(element);
+    return element;
+  }
+
+  function clampPan() {
+    panX = Math.max(0, Math.min(panX, maxPanX));
+    panY = Math.max(0, Math.min(panY, maxPanY));
+  }
+
+  function updateStage() {
+    stage.style.transform = `matrix(${scale}, 0, 0, ${scale}, ${-panX}, ${-panY})`;
+    updateIndicators();
+  }
+
+  function updateIndicators() {
+    const edge = 1;
+    indicators.left.classList.toggle('visible', panX > edge);
+    indicators.right.classList.toggle('visible', panX < maxPanX - edge);
+    indicators.up.classList.toggle('visible', panY > edge);
+    indicators.down.classList.toggle('visible', panY < maxPanY - edge);
+  }
+
+  function scrollByDelta(deltaX, deltaY) {
+    panX += deltaX;
+    panY += deltaY;
+    clampPan();
+    updateStage();
+  }
+
+  function isPageNumberText(text) {
+    return /^\d+\s*\/\s*\d+$/.test(text);
+  }
+
+  function contentSpans(line) {
+    return Array.from(line.querySelectorAll('span')).filter((span) => {
+      const text = span.textContent.trim();
+      const isPageNumber = isPageNumberText(text);
+      span.classList.toggle('presenterm-page-number', isPageNumber);
+      return text !== '' && !isPageNumber;
+    });
+  }
+
+  function trimTrailingEmptyLines(slide) {
+    const lines = Array.from(slide.querySelectorAll('.content-line'));
+    let lastContentLine = -1;
+    contentRight = 0;
+
+    lines.forEach((line, index) => {
+      line.classList.remove('trimmed-empty');
+      const spans = contentSpans(line);
+      if (spans.length > 0) {
+        lastContentLine = index;
+        spans.forEach((span) => {
+          contentRight = Math.max(contentRight, span.offsetLeft + span.offsetWidth);
+        });
+      }
+    });
+
+    lines.forEach((line, index) => {
+      line.classList.toggle('trimmed-empty', index > lastContentLine);
+    });
+    trimmedHeight = lastContentLine >= 0
+      ? lines[lastContentLine].offsetTop + lines[lastContentLine].offsetHeight
+      : 0;
+  }
+
+  function currentPageNumber(slide) {
+    const pageNumber = Array.from(slide.querySelectorAll('span'))
+      .map((span) => span.textContent.trim())
+      .find((text) => isPageNumberText(text));
+    return pageNumber || '';
+  }
 
 
   function showCurrentPage() {
@@ -1624,20 +1799,42 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     allLines[currentPageIndex].classList.remove('hidden');
+    trimTrailingEmptyLines(allLines[currentPageIndex]);
+    pageNumberOverlay.textContent = currentPageNumber(allLines[currentPageIndex]);
+    panX = 0;
+    panY = 0;
+    scaler();
   }
 
-
   function scaler() {
-    var w = document.documentElement.clientWidth;
-    var h = document.documentElement.clientHeight;
-    let widthScaledAmount= w/originalWidth;
-    let heightScaledAmount= h/originalHeight;
-    let scaledAmount = Math.min(widthScaledAmount, heightScaledAmount);
-    document.querySelector("body").style.transform = `scale(${scaledAmount})`;
+    const w = document.documentElement.clientWidth;
+    const h = document.documentElement.clientHeight;
+    const widthScaledAmount = w / originalWidth;
+    const heightScaledAmount = h / originalHeight;
+    scale = Math.max(widthScaledAmount, heightScaledAmount);
+    maxPanX = Math.max(0, contentRight * scale - w);
+    maxPanY = Math.max(0, trimmedHeight * scale - h);
+    clampPan();
+    updateStage();
   }
 
   function handleKeyPress(event) {
-    if (event.key === 'ArrowLeft') {
+    const key = event.key.toLowerCase();
+    const step = event.shiftKey ? 220 : 80;
+
+    if (key === 'h') {
+      event.preventDefault();
+      scrollByDelta(-step, 0);
+    } else if (key === 'j') {
+      event.preventDefault();
+      scrollByDelta(0, step);
+    } else if (key === 'k') {
+      event.preventDefault();
+      scrollByDelta(0, -step);
+    } else if (key === 'l') {
+      event.preventDefault();
+      scrollByDelta(step, 0);
+    } else if (event.key === 'ArrowLeft') {
       if (currentPageIndex > 0) {
         currentPageIndex--;
         showCurrentPage();
