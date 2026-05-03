@@ -70,11 +70,34 @@
             transition: opacity 120ms ease;
             color: rgba(251, 241, 199, 0.72);
             text-shadow: 0 1px 8px rgba(40, 40, 40, 0.9);
-            font: 700 32px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            width: 56px;
+            height: 56px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
 
         .scroll-indicator.visible {
             opacity: 1;
+        }
+
+        .scroll-indicator .arrow-glyph {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            font-size: 44px;
+            line-height: 1;
+        }
+
+        .scroll-indicator .key-hint {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(40, 40, 40, 0.9);
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1;
+            text-shadow: 0 1px 6px rgba(251, 241, 199, 0.45);
         }
 
         .scroll-indicator.up {
@@ -1705,20 +1728,20 @@ document.addEventListener('DOMContentLoaded', function() {
   allLines.forEach((slide) => stage.appendChild(slide));
 
   const indicators = {
-    up: makeIndicator('up', '▲'),
-    down: makeIndicator('down', '▼'),
-    left: makeIndicator('left', '◀'),
-    right: makeIndicator('right', '▶'),
+    up: makeIndicator('up', '▲', 'k'),
+    down: makeIndicator('down', '▼', 'j'),
+    left: makeIndicator('left', '◀', 'h'),
+    right: makeIndicator('right', '▶', 'l'),
   };
   const pageNumberOverlay = document.createElement('div');
   pageNumberOverlay.className = 'page-number-overlay';
   document.body.appendChild(pageNumberOverlay);
 
-  function makeIndicator(direction, glyph) {
+  function makeIndicator(direction, glyph, key) {
     const element = document.createElement('div');
     element.className = `scroll-indicator ${direction}`;
     element.setAttribute('aria-hidden', 'true');
-    element.textContent = glyph;
+    element.innerHTML = `<span class="arrow-glyph">${glyph}</span><span class="key-hint">${key}</span>`;
     document.body.appendChild(element);
     return element;
   }
@@ -1746,6 +1769,40 @@ document.addEventListener('DOMContentLoaded', function() {
     panY += deltaY;
     clampPan();
     updateStage();
+  }
+
+  function normalizeWheelDelta(event) {
+    const multiplier = event.deltaMode === WheelEvent.DOM_DELTA_LINE
+      ? 16
+      : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+        ? Math.min(document.documentElement.clientWidth, document.documentElement.clientHeight)
+        : 1;
+    return {
+      x: event.deltaX * multiplier,
+      y: event.deltaY * multiplier,
+    };
+  }
+
+  function handleWheel(event) {
+    if (maxPanX === 0 && maxPanY === 0) {
+      return;
+    }
+
+    const delta = normalizeWheelDelta(event);
+    let deltaX = maxPanX > 0 ? delta.x : 0;
+    let deltaY = maxPanY > 0 ? delta.y : 0;
+
+    if (maxPanX > 0 && maxPanY === 0 && Math.abs(deltaX) < Math.abs(delta.y)) {
+      deltaX = delta.y;
+    }
+
+    const previousX = panX;
+    const previousY = panY;
+    scrollByDelta(deltaX, deltaY);
+
+    if (panX !== previousX || panY !== previousY) {
+      event.preventDefault();
+    }
   }
 
   function isPageNumberText(text) {
@@ -1811,7 +1868,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const h = document.documentElement.clientHeight;
     const widthScaledAmount = w / originalWidth;
     const heightScaledAmount = h / originalHeight;
-    scale = Math.max(widthScaledAmount, heightScaledAmount);
+    const screenWidth = window.screen?.availWidth || window.screen?.width || w;
+    const screenHeight = window.screen?.availHeight || window.screen?.height || h;
+    const maxScreenScale = Math.max(screenWidth / originalWidth, screenHeight / originalHeight);
+    scale = Math.min(Math.max(widthScaledAmount, heightScaledAmount), maxScreenScale);
     maxPanX = Math.max(0, contentRight * scale - w);
     maxPanY = Math.max(0, trimmedHeight * scale - h);
     clampPan();
@@ -1848,6 +1908,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   document.addEventListener('keydown', handleKeyPress);
+  document.addEventListener('wheel', handleWheel, { passive: false });
   window.addEventListener("resize", scaler);
 
   scaler();
